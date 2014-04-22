@@ -35,6 +35,7 @@ class CASMO(object):
           raise Exception('Input file must be a CASMO .out file.')
       self.read_file_contents()
       self.find_lattice_lines()
+      self.find_material_lines()
 
     def read_file_contents(self):
 
@@ -59,6 +60,35 @@ class CASMO(object):
         print('CASMO lattice:')
         for aline in self.lattice_lines:
             print(aline)
+            
+    def find_material_lines(self):
+        read_materials = False
+        matline = []
+        for aline in self.lines:
+            if re.search('Composition name, Material number', aline):
+                read_materials = True
+                continue
+            if re.search('Dancoff factor map', aline):
+                break
+            if not read_materials:
+                continue
+            if aline is not '':
+                sline = aline.split()
+                if len(sline[0]) == 3:
+                    if len(matline) > 0:
+                        self.material.update({matname:matline})
+                    matname = sline[0]
+                    matline = []
+                    matline.append(aline)
+                else:
+                    matline.append(aline)
+                    
+    def print_material_lines(self):
+        for key in self.material:
+            print('Material {0}'.format(key))
+            print(self.material[key])
+            print('')
+                    
 
 def main():
 
@@ -69,6 +99,7 @@ def main():
     # Parse CASMO file
     casmo = CASMO(options.input) 
     casmo.print_lattice_lines()
+    casmo.print_material_lines()
 
 if __name__ == '__main__':
     main()

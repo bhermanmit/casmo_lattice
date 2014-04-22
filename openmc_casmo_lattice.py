@@ -29,6 +29,7 @@ class CASMO(object):
       self.lines = ''
       self.lattice_lines = []
       self.material = {}
+      self.pins = {}
 
       # Run parsing methods
       if not self.filename.endswith('.out'):
@@ -36,6 +37,7 @@ class CASMO(object):
       self.read_file_contents()
       self.find_lattice_lines()
       self.find_material_lines()
+      self.find_pin_lines()
 
     def read_file_contents(self):
 
@@ -64,6 +66,7 @@ class CASMO(object):
     def find_material_lines(self):
         read_materials = False
         matline = []
+        matname = ''
         for aline in self.lines:
             if re.search('Composition name, Material number', aline):
                 read_materials = True
@@ -88,7 +91,44 @@ class CASMO(object):
             print('Material {0}'.format(key))
             print(self.material[key])
             print('')
-                    
+            
+    def find_pin_lines(self):
+        read_pins = False
+        read_pin = False
+        pinline = []
+        pinname = ''
+        for aline in self.lines:
+            if re.search('List of CASMO5 Input Cards', aline):
+                read_pins = True
+                continue
+            if re.search('List of CASMO5 Input Cards Complete', aline):
+                break
+            if not read_pins:
+                continue
+            if aline.strip() is not '':
+                sline = aline.split()
+                if re.search('PIN', sline[0]):
+                    if len(pinline) > 0:
+                        if not re.search('ROD', ''.join(pinline)):
+                            self.pins.update({pinname:pinline})
+                    read_pin = True
+                    pinname = sline[0]+sline[1]
+                    pinline = []
+                    pinline.append(aline)
+                elif read_pin:
+                    if not re.search('^    ', aline):
+                        read_pin = False
+                        if not re.search('ROD', ''.join(pinline)):
+                            self.pins.update({pinname:pinline})
+                        pinline = []
+                        continue
+                    pinline.append(aline)
+
+    def print_pin_lines(self):
+        for key in self.pins:
+            print('Material {0}'.format(key))
+            print(self.pins[key])
+            print('')              
 
 def main():
 
@@ -100,6 +140,7 @@ def main():
     casmo = CASMO(options.input) 
     casmo.print_lattice_lines()
     casmo.print_material_lines()
+    casmo.print_pin_lines()
 
 if __name__ == '__main__':
     main()

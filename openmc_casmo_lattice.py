@@ -13,6 +13,28 @@ parser.add_option('-i', '--input', dest='input',
                   help="CASMO (.out) file name.")
 (options, args) = parser.parse_args()
 
+pin_lattice ="""
+{nw:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {no:>4} {ne:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {pa:>4} {fp:>4} {fp:>4} {pb:>4} {fp:>4} {fp:>4} {pc:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {pd:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {pe:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {pf:>4} {fp:>4} {fp:>4} {pg:>4} {fp:>4} {fp:>4} {ph:>4} {fp:>4} {fp:>4} {pi:>4} {fp:>4} {fp:>4} {pj:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {pk:>4} {fp:>4} {fp:>4} {pl:>4} {fp:>4} {fp:>4} {pm:>4} {fp:>4} {fp:>4} {pn:>4} {fp:>4} {fp:>4} {po:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {pp:>4} {fp:>4} {fp:>4} {pq:>4} {fp:>4} {fp:>4} {pr:>4} {fp:>4} {fp:>4} {ps:>4} {fp:>4} {fp:>4} {pt:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {pu:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {pv:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {pw:>4} {fp:>4} {fp:>4} {px:>4} {fp:>4} {fp:>4} {py:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{we:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {fp:>4} {ea:>4}
+{sw:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {so:>4} {se:>4}
+"""
+
 class CASMO(object):
 
     def __init__(self, filename):
@@ -21,6 +43,9 @@ class CASMO(object):
       self.filename = filename
       self.lines = ''
       self.lattice_lines = []
+      self.lattice_sym = None 
+      self.pin_pitch = None
+      self.assy_pitch = None
       self.material = {}
       self.pins = {}
 
@@ -29,6 +54,7 @@ class CASMO(object):
           raise Exception('Input file must be a CASMO .out file.')
       self.read_file_contents()
       self.find_lattice_lines()
+      self.find_lattice_info()
       self.find_material_lines()
       self.find_pin_lines()
 
@@ -50,6 +76,23 @@ class CASMO(object):
                 continue
             if aline is not '':
                 self.lattice_lines.append(aline)
+
+    def find_lattice_info(self):
+        first_true = True
+        for aline in self.lines:
+            if re.search('PWR', aline):
+                pwrline = aline
+                if first_true:
+                    first_true = False
+                else:
+                    break
+        pwrline = pwrline.split('*')[0]
+        pwrline = pwrline.replace(',','')
+        pwrline = pwrline.split()
+        self.pin_pitch = pwrline[2]
+        self.pin_pitch = pwrline[3]
+        self.lattice_sym = pwrline[-1]
+        print(self.lattice_sym)
 
     def print_lattice_lines(self):
         print('CASMO lattice:')

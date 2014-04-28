@@ -6,14 +6,6 @@ import os
 import re
 from optparse import OptionParser
 
-# OpenCSG packages
-sys.path.append(os.path.join('opencsg', 'opencsg'))
-from material import *
-from surface import *
-from universe import *
-from geometry import *
-from mesh import *
-
 # Parse command line options
 parser = OptionParser()
 parser.add_option('-i', '--input', dest='input',
@@ -22,8 +14,8 @@ parser.add_option('-i', '--input', dest='input',
 
 # Initialize global variables 
 univ = 0
-pin_dict = {}
-mat_dict = {}
+pin_list = []
+mat_list = [] 
 
 class CASMO(object):
 
@@ -141,6 +133,46 @@ class CASMO(object):
             print(self.pins[key])
             print('')              
 
+class Material(object):
+    def __init__(self, name, cas_mat):
+        self.name = name
+        self.nuclide_names = []
+        self.nuclide_fracs = []
+
+        # convert from casmo
+        self.process_casmo(cas_mat)
+
+        print(self.name)
+        print(self.nuclide_names)
+        print(self.nuclide_fracs)
+
+    def process_casmo(self, cas_mat):
+
+        nuclide_start = True
+
+        # create one big string
+        mat_str = ''.join(cas_mat)
+        mat_list = mat_str.split()
+
+        # loop around str and start at index 4
+        for i in range(len(mat_list)):
+            if i < 3:
+                continue
+
+            # check for = sign
+            if mat_list[i] == '=':
+                continue
+
+            # read in nuclide
+            if nuclide_start:
+                nuclide_name = mat_list[i].replace('=', '')
+                self.nuclide_names.append(nuclide_name)
+                nuclide_start = False
+            else:
+                nuclide_frac = float(mat_list[i])/1.0e24
+                self.nuclide_fracs.append(nuclide_frac)
+                nuclide_start = True
+
 class Pin(object):
 
     def __init__(self, name, cas_pin):
@@ -156,10 +188,6 @@ class Pin(object):
 
         # process pin
         self.process_casmo(cas_pin)
-
-        print(self.name)
-        print(self.radii)
-        print(self.mats)
 
     def process_casmo(self, cas_pin):
 
@@ -196,6 +224,8 @@ class Pin(object):
 
 def main():
 
+    global pin_list, mat_list
+
     # Check for input file
     if options.input is None:
         raise Exception('Must specify input file.')
@@ -203,8 +233,13 @@ def main():
     # Parse CASMO file
     casmo = CASMO(options.input)
 
-    # Test pin
-    apin = Pin('PIN4_ROD', casmo.pins['PIN4_ROD'])
+    # Process Materials from CASMO lines into Python objects
+    for matkey in casmo.material:
+        mat_list.append(Material(matkey, casmo.material[matkey]))
+
+    # Process Pins from CASMO lines into Python objects
+    for pinkey in casmo.pins:
+        pin_list.append(Pin(pinkey, casmo.pins[pinkey]))
 
 if __name__ == '__main__':
     main()

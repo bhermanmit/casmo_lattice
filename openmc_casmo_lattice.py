@@ -20,6 +20,11 @@ parser.add_option('-i', '--input', dest='input',
                   help="CASMO (.out) file name.")
 (options, args) = parser.parse_args()
 
+# Initialize global variables 
+univ = 0
+pin_dict = {}
+mat_dict = {}
+
 class CASMO(object):
 
     def __init__(self, filename):
@@ -117,6 +122,8 @@ class CASMO(object):
                     pinname = sline[0]+sline[1]
                     pinline = []
                     pinline.append(aline)
+
+                # takes care of additional lines in pin
                 elif read_pin:
                     if not re.search('^            ', aline):
                         read_pin = False
@@ -130,9 +137,62 @@ class CASMO(object):
 
     def print_pin_lines(self):
         for key in self.pins:
-            print('Material {0}'.format(key))
+            print('{0}'.format(key))
             print(self.pins[key])
             print('')              
+
+class Pin(object):
+
+    def __init__(self, name, cas_pin):
+        self.name = name
+        self.radii = []
+        self.mats = []
+        self.active = False
+
+        # set up unique universe
+        global univ
+        univ += 1
+        self.univ = univ
+
+        # process pin
+        self.process_casmo(cas_pin)
+
+        print(self.name)
+        print(self.radii)
+        print(self.mats)
+
+    def process_casmo(self, cas_pin):
+
+        radii_lines = True
+        mat_lines = False
+
+        # create one long string
+        pin_str = ''.join(cas_pin)
+        pin_list = pin_str.split()
+
+        # loop around str and start at index 2
+        for i in range(len(pin_list)):
+            if i < 2:
+                continue
+
+            # check for separator between radii and mats
+            a = pin_list[i]
+            if pin_list[i] == '/':
+                radii_lines = False
+                mat_lines = True
+                continue
+
+            # Check for final separators
+            if pin_list[i] == '//' or pin_list[i] == '*':
+                break
+
+            # add radii to list
+            if radii_lines:
+                self.radii.append(pin_list[i])
+
+            # add material to list
+            if mat_lines:
+                self.mats.append(pin_list[i])
 
 def main():
 
@@ -141,10 +201,10 @@ def main():
         raise Exception('Must specify input file.')
 
     # Parse CASMO file
-    casmo = CASMO(options.input) 
-    casmo.print_lattice_lines()
-    casmo.print_material_lines()
-    casmo.print_pin_lines()
+    casmo = CASMO(options.input)
+
+    # Test pin
+    apin = Pin('PIN4_ROD', casmo.pins['PIN4_ROD'])
 
 if __name__ == '__main__':
     main()

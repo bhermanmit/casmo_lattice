@@ -5,17 +5,13 @@ import sys
 import os
 import re
 from optparse import OptionParser
+from core2D import *
 
 # Parse command line options
 parser = OptionParser()
 parser.add_option('-i', '--input', dest='input',
                   help="CASMO (.out) file name.")
 (options, args) = parser.parse_args()
-
-# Initialize global variables 
-univ = 0
-pin_list = []
-mat_list = [] 
 
 class CASMO(object):
 
@@ -133,7 +129,7 @@ class CASMO(object):
             print(self.pins[key])
             print('')              
 
-class Material(object):
+class CASMOMaterial(object):
     def __init__(self, name, cas_mat):
         self.name = name
         self.nuclide_names = []
@@ -142,9 +138,8 @@ class Material(object):
         # convert from casmo
         self.process_casmo(cas_mat)
 
-        print(self.name)
-        print(self.nuclide_names)
-        print(self.nuclide_fracs)
+        # create python object
+        self.create_object()
 
     def process_casmo(self, cas_mat):
 
@@ -173,18 +168,19 @@ class Material(object):
                 self.nuclide_fracs.append(nuclide_frac)
                 nuclide_start = True
 
-class Pin(object):
+    def create_object(self):
+        mat_obj = Material(self.name, self.name)
+        for name, frac in zip(self.nuclide_names, self.nuclide_fracs):
+            mat_obj.add_nuclide(name, '71c', frac)
+        mat_dict.update({self.name:mat_obj})
+
+class CASMOPin(object):
 
     def __init__(self, name, cas_pin):
         self.name = name
         self.radii = []
         self.mats = []
         self.active = False
-
-        # set up unique universe
-        global univ
-        univ += 1
-        self.univ = univ
 
         # process pin
         self.process_casmo(cas_pin)
@@ -224,8 +220,6 @@ class Pin(object):
 
 def main():
 
-    global pin_list, mat_list
-
     # Check for input file
     if options.input is None:
         raise Exception('Must specify input file.')
@@ -235,11 +229,35 @@ def main():
 
     # Process Materials from CASMO lines into Python objects
     for matkey in casmo.material:
-        mat_list.append(Material(matkey, casmo.material[matkey]))
+        CASMOMaterial(matkey, casmo.material[matkey])
 
     # Process Pins from CASMO lines into Python objects
     for pinkey in casmo.pins:
-        pin_list.append(Pin(pinkey, casmo.pins[pinkey]))
+        CASMOPin(pinkey, casmo.pins[pinkey])
+
+    # Write out all files
+    write_files()
+
+def write_files():
+
+############ Materials File ##############
+
+    # Heading info
+    mat_str = ""
+    mat_str += \
+"""<?xml version="1.0" encoding="UTF-8"?>\n<materials>\n\n"""
+
+    # Write out materials
+    for item in mat_dict.keys():
+        mat_str += mat_dict[item].write_xml()
+        mat_str += "\n"
+
+    # Write out footer info
+    mat_str += \
+"""</materials>"""
+    with open('materials.xml','w') as fh:
+        fh.write(mat_str)
+    
 
 if __name__ == '__main__':
     main()

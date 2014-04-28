@@ -185,6 +185,9 @@ class CASMOPin(object):
         # process pin
         self.process_casmo(cas_pin)
 
+        # create python object
+        self.create_object()
+
     def process_casmo(self, cas_pin):
 
         radii_lines = True
@@ -216,7 +219,34 @@ class CASMOPin(object):
 
             # add material to list
             if mat_lines:
-                self.mats.append(pin_list[i])
+                matname = pin_list[i].replace("'","")
+                self.mats.append(matname)
+
+    def create_object(self):
+
+        i_surf = 0
+        i_cell = 0
+
+        # loop over radii and mats
+        for radii, mat in zip(self.radii, self.mats):
+
+            # add the surface
+            i_surf += 1
+            add_surface(self.name+'{0}'.format(i_surf), 'z-cylinder', '0.0 0.0 {0}'.format(radii))
+
+            # get the material id (BOX and CAN equivalent)
+            if mat == 'BOX':
+                mat = 'CAN'
+            if mat == 'AIC':
+                mat = 'CAN' 
+            matid = mat_dict[mat].id
+
+            # add the cell
+            i_cell += 1
+            if i_surf == 1:
+                add_cell(self.name+'{0}'.format(i_cell), '-{0}'.format(i_surf), universe=self.name, material=matid)
+            else:
+                add_cell(self.name+'{0}'.format(i_cell), ' {0} -{1}'.format(i_surf-1, i_surf), universe=self.name, material=matid)
 
 def main():
 
@@ -239,6 +269,33 @@ def main():
     write_files()
 
 def write_files():
+
+############ Geometry File ##############
+
+    # Heading info
+    geo_str = ""
+    geo_str += \
+"""<?xml version="1.0" encoding="UTF-8"?>\n<geometry>\n\n"""
+
+    # Write out surfaces
+    for item in surf_dict.keys():
+        geo_str += surf_dict[item].write_xml()
+
+    # Write out cells
+    geo_str += "\n"
+    for item in cell_dict.keys():
+        geo_str += cell_dict[item].write_xml()
+
+    # Write out lattices
+    geo_str += "\n"
+    for item in lat_dict.keys():
+        geo_str += lat_dict[item].write_xml()
+
+    # Write out footer info
+    geo_str += \
+"""\n</geometry>"""
+    with open('geometry.xml','w') as fh:
+        fh.write(geo_str)
 
 ############ Materials File ##############
 

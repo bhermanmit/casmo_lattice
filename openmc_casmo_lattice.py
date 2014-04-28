@@ -98,7 +98,7 @@ class CASMO(object):
         pinline = []
         pinname = ''
         for aline in self.lines:
-            if re.search('List of CASMO5 Input Cards', aline):
+            if re.search('List of CASMO5 Input Cards \(', aline):
                 read_pins = True
                 continue
             if re.search('List of CASMO5 Input Cards Complete', aline):
@@ -111,15 +111,19 @@ class CASMO(object):
                     if len(pinline) > 0:
                         if not re.search('ROD', ''.join(pinline)):
                             self.pins.update({pinname:pinline})
+                        else:
+                            self.pins.update({pinname+'_ROD':pinline})
                     read_pin = True
                     pinname = sline[0]+sline[1]
                     pinline = []
                     pinline.append(aline)
                 elif read_pin:
-                    if not re.search('^    ', aline):
+                    if not re.search('^            ', aline):
                         read_pin = False
                         if not re.search('ROD', ''.join(pinline)):
                             self.pins.update({pinname:pinline})
+                        else:
+                            self.pins.update({pinname+'_ROD':pinline})
                         pinline = []
                         continue
                     pinline.append(aline)

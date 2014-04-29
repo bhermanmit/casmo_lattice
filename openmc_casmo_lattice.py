@@ -223,10 +223,25 @@ class CASMOMaterial(object):
                 nuclide_start = True
 
     def create_object(self):
+        haso18 = False
         mat_obj = Material(self.name, self.name)
         for name, frac in zip(self.nuclide_names, self.nuclide_fracs):
+            if name == 'O-18':
+                haso18 = True
             mat_obj.add_nuclide(name, '71c', frac)
+        if haso18:
+            o18idx = 0
+            o16idx = 0
+            for i in range(len(mat_obj.nuclides)):
+                if mat_obj.nuclides[i].name == 'O-18':
+                    o18idx = i
+                if mat_obj.nuclides[i].name == 'O-16':
+                    o16idx = i
+            o18frac = float(mat_obj.nuclides[o18idx].value)
+            mat_obj.nuclides[o16idx].value += o18frac
+            del mat_obj.nuclides[o18idx]
         mat_dict.update({self.name:mat_obj})
+
 
 class CASMOPin(object):
 

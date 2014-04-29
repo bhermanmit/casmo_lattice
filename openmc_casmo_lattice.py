@@ -7,6 +7,13 @@ import re
 from optparse import OptionParser
 from core2D import *
 
+# Input Data
+settings = {
+'batches' : 500,
+'inactive' : 100,
+'particles' : 1000,
+}
+
 # Parse command line options
 parser = OptionParser()
 parser.add_option('-i', '--input', dest='input',
@@ -318,8 +325,16 @@ def main():
     # Create core
     create_core(casmo)
 
+    # Plot core
+    add_plot('plot_axial',
+        origin = '0.0 0.0 0.0',
+        width = '{0} {0}'.format(casmo.lattice_pitch),
+        basis = 'xy',
+        pixels = '3000 3000',
+        filename = 'lattice')
+
     # Write out all files
-    write_files()
+    write_files(casmo)
 
 def process_lattice(casmo):
 
@@ -403,8 +418,8 @@ def process_lattice(casmo):
 
     # Create lattice
     pin_pitch = float(casmo.pin_pitch)
-    lower_left = "-{0} -{0}".format(pin_pitch*19/2.0, pin_pitch*19/2.0)
-    width = "{0} {0}".format(pin_pitch, pin_pitch)
+    lower_left = "-{0} -{0}".format(pin_pitch*19/2.0)
+    width = "{0} {0}".format(pin_pitch)
     universes = pin_lattice.format(**lattice_id)
     add_lattice('lattice', '19 19', lower_left, width, universes) 
 
@@ -416,8 +431,37 @@ def create_core(casmo):
 
     # Set up lattice boundary surfaces
     add_surface('lattice_left', 'x-plane', '-{0}'.format(pin_pitch*19/2.0))
+    add_surface('lattice_right', 'x-plane', '{0}'.format(pin_pitch*19/2.0))
+    add_surface('lattice_back', 'y-plane', '-{0}'.format(pin_pitch*19/2.0))
+    add_surface('lattice_front', 'y-plane', '{0}'.format(pin_pitch*19/2.0))
 
-def write_files():
+    # Set up lattice fill cell
+    lat_surfs = '{0} -{1} {2} -{3}'.format(surf_dict['lattice_left'].id, 
+        surf_dict['lattice_right'].id, surf_dict['lattice_back'].id,
+        surf_dict['lattice_front'].id)
+    add_cell('lattice_fill', lat_surfs, fill=lat_dict['lattice'].id) 
+
+    # Set up core surfaces
+    add_surface('core_left', 'x-plane', '-{0}'.format(lattice_pitch/2.0), bc='reflective')
+    add_surface('core_right', 'x-plane', '{0}'.format(lattice_pitch/2.0), bc='reflective')
+    add_surface('core_back', 'y-plane', '-{0}'.format(lattice_pitch/2.0), bc='reflective')
+    add_surface('core_front', 'y-plane', '{0}'.format(lattice_pitch/2.0), bc='reflective')
+    add_surface('core_bottom', 'z-plane', '-100.0', bc='reflective')
+    add_surface('core_top', 'z-plane', '100.0', bc='reflective')
+
+    # Add water around lattice fill cell
+    add_cell('top_water', '-{0} {1} -{2}'.format(surf_dict['core_front'].id,
+             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
+    add_cell('bottom_water', '{0} {1} -{2}'.format(surf_dict['core_back'].id,
+             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
+    add_cell('right_water', '-{0} -{1} {2} {3} -{4}'.format(surf_dict['core_right'].id,
+             surf_dict['core_front'].id, surf_dict['core_back'].id,
+             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
+    add_cell('left_water', '{0} -{1} {2} {3} -{4}'.format(surf_dict['core_left'].id,
+             surf_dict['core_front'].id, surf_dict['core_back'].id,
+             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
+
+def write_files(casmo):
 
 ############ Geometry File ##############
 
@@ -463,7 +507,56 @@ def write_files():
 """</materials>"""
     with open('materials.xml','w') as fh:
         fh.write(mat_str)
-    
+
+############ Settings File ##############
+
+    assy_pitch = float(casmo.lattice_pitch)
+    settings.update({
+'xbot' : assy_pitch/2.0,
+'ybot' : assy_pitch/2.0,
+'zbot' : -100.0,
+'xtop' : assy_pitch/2.0,
+'ytop' : assy_pitch/2.0,
+'ztop' : 100.0,
+'entrX' : 17,
+'entrY' : 17,
+'entrZ' : 1
+    })
+
+    set_str = """<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+
+  <!-- Parameters for criticality calculation -->
+  <eigenvalue batches="{batches}" inactive="{inactive}" particles="{particles}" />
+
+  <!-- Starting source -->
+  <source>
+    <space type="box">
+      <parameters>{xbot} {ybot} {zbot} {xtop} {ytop} {ztop}</parameters>
+    </space>
+  </source>
+
+  <!-- Shannon Entropy -->
+  <entropy>
+    <dimension> {entrX} {entrY} {entrZ} </dimension>
+    <lower_left> {xbot} {ybot} {zbot} </lower_left>
+    <upper_right> {xtop} {ytop} {ztop} </upper_right>
+  </entropy>
+
+</settings>""".format(**settings)
+    with open('settings.xml','w') as fh:
+        fh.write(set_str)
+
+############ Plots File ##############
+
+    plot_str = """<?xml version="1.0" encoding="UTF-8"?>\n"""
+    plot_str += """<plots>\n"""
+    for item in plot_dict.keys():
+        plot_str += plot_dict[item].write_xml()
+        plot_str += "\n"
+    plot_str += """</plots>""".format(x = assy_pitch+5, y = assy_pitch+5)
+    with open('plots.xml','w') as fh:
+        fh.write(plot_str)
 
 if __name__ == '__main__':
     main()

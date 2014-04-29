@@ -290,7 +290,7 @@ class CASMOPin(object):
 
             # add the surface
             i_surf += 1
-            add_surface(self.name+'{0}'.format(i_surf), 'z-cylinder', '0.0 0.0 {0}'.format(radii))
+            add_surface(self.name+'{0}'.format(i_surf), 'z-cylinder', '0.0 0.0 {0}'.format(radii), comment=self.name)
 
             # get the material id (BOX and CAN equivalent)
             if mat == 'BOX':
@@ -302,9 +302,13 @@ class CASMOPin(object):
             # add the cell
             i_cell += 1
             if i_surf == 1:
-                add_cell(self.name+'{0}'.format(i_cell), '-{0}'.format(i_surf), universe=self.name, material=matid)
+                add_cell(self.name+'{0}'.format(i_cell), '-{0}'.format(surf_dict[self.name+'{0}'.format(i_surf)].id), universe=self.name, material=matid, comment=self.name)
             else:
-                add_cell(self.name+'{0}'.format(i_cell), ' {0} -{1}'.format(i_surf-1, i_surf), universe=self.name, material=matid)
+                add_cell(self.name+'{0}'.format(i_cell), ' -{0} {1}'.format(surf_dict[self.name+'{0}'.format(i_surf)].id, surf_dict[self.name+'{0}'.format(i_surf-1)].id),
+                      universe=self.name, material=matid, comment=self.name)
+
+        # add remaining water
+        add_cell(self.name+'{0}'.format(i_cell+1), '{0}'.format(surf_dict[self.name+'{0}'.format(i_surf)].id), universe=self.name, material=mat_dict['COO'].id, comment=self.name)
 
 def main():
 
@@ -335,7 +339,8 @@ def main():
         width = '{0} {0}'.format(casmo.lattice_pitch),
         basis = 'xy',
         pixels = '3000 3000',
-        filename = 'lattice')
+        filename = 'lattice',
+        background = '127 255 0')
 
     # Write out all files
     write_files(casmo)

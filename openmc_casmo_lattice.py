@@ -433,18 +433,6 @@ def create_core(casmo):
     pin_pitch = float(casmo.pin_pitch)
     lattice_pitch = float(casmo.lattice_pitch)
 
-    # Set up lattice boundary surfaces
-    add_surface('lattice_left', 'x-plane', '-{0}'.format(pin_pitch*19/2.0))
-    add_surface('lattice_right', 'x-plane', '{0}'.format(pin_pitch*19/2.0))
-    add_surface('lattice_back', 'y-plane', '-{0}'.format(pin_pitch*19/2.0))
-    add_surface('lattice_front', 'y-plane', '{0}'.format(pin_pitch*19/2.0))
-
-    # Set up lattice fill cell
-    lat_surfs = '{0} -{1} {2} -{3}'.format(surf_dict['lattice_left'].id, 
-        surf_dict['lattice_right'].id, surf_dict['lattice_back'].id,
-        surf_dict['lattice_front'].id)
-    add_cell('lattice_fill', lat_surfs, fill=lat_dict['lattice'].id) 
-
     # Set up core surfaces
     add_surface('core_left', 'x-plane', '-{0}'.format(lattice_pitch/2.0), bc='reflective')
     add_surface('core_right', 'x-plane', '{0}'.format(lattice_pitch/2.0), bc='reflective')
@@ -453,17 +441,12 @@ def create_core(casmo):
     add_surface('core_bottom', 'z-plane', '-100.0', bc='reflective')
     add_surface('core_top', 'z-plane', '100.0', bc='reflective')
 
-    # Add water around lattice fill cell
-    add_cell('top_water', '-{0} {1} -{2}'.format(surf_dict['core_front'].id,
-             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
-    add_cell('bottom_water', '{0} {1} -{2}'.format(surf_dict['core_back'].id,
-             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
-    add_cell('right_water', '-{0} -{1} {2} {3} -{4}'.format(surf_dict['core_right'].id,
-             surf_dict['core_front'].id, surf_dict['core_back'].id,
-             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
-    add_cell('left_water', '{0} -{1} {2} {3} -{4}'.format(surf_dict['core_left'].id,
-             surf_dict['core_front'].id, surf_dict['core_back'].id,
-             surf_dict['core_bottom'].id, surf_dict['core_top'].id), material=mat_dict['COO'].id)
+    # Set up lattice fill cell
+    lat_surfs = '{0} -{1} {2} -{3} {4} -{5}'.format(surf_dict['core_left'].id, 
+        surf_dict['core_right'].id, surf_dict['core_back'].id,
+        surf_dict['core_front'].id, surf_dict['core_bottom'].id,
+        surf_dict['core_top'].id)
+    add_cell('core_fill', lat_surfs, fill=lat_dict['lattice'].id)
 
 def write_files(casmo):
 
@@ -516,8 +499,8 @@ def write_files(casmo):
 
     assy_pitch = float(casmo.lattice_pitch)
     settings.update({
-'xbot' : assy_pitch/2.0,
-'ybot' : assy_pitch/2.0,
+'xbot' : -assy_pitch/2.0,
+'ybot' : -assy_pitch/2.0,
 'zbot' : -100.0,
 'xtop' : assy_pitch/2.0,
 'ytop' : assy_pitch/2.0,

@@ -163,7 +163,7 @@ class CASMO(object):
 
                 # takes care of additional lines in pin
                 elif read_pin:
-                    if not re.search('^            ', aline):
+                    if not re.search('^       ', aline):
                         read_pin = False
                         if not re.search('ROD', ''.join(pinline)):
                             self.pins.update({pinname:pinline})
@@ -172,6 +172,13 @@ class CASMO(object):
                         pinline = []
                         continue
                     pinline.append(aline)
+            if aline.strip() is '' and len(pinline) > 0:
+                if not re.search('ROD', ''.join(pinline)):
+                    self.pins.update({pinname:pinline})
+                else:
+                    self.pins.update({pinname+'_ROD':pinline})
+                pinline = []
+                read_pin = False
 
     def print_pin_lines(self):
         for key in self.pins:
@@ -359,7 +366,7 @@ def main():
     # Process Pins from CASMO lines into Python objects
     for pinkey in casmo.pins:
         CASMOPin(pinkey, casmo.pins[pinkey])
-
+    casmo.print_pin_lines()
     # Process lattice information
     process_lattice(casmo)
 
@@ -438,6 +445,50 @@ def process_lattice(casmo):
                 lattice_id.update({'pc':py})
                 lattice_id.update({'pa':py})
                 lattice_id.update({'pw':py})
+
+    # Organize casmo pin lattice
+    if casmo.lattice_sym == '1':
+
+        # Sweep row by row
+        for i in range(len(casmo.lattice_lines)):
+
+            # Split that line
+            sline = casmo.lattice_lines[i].split()
+
+            # Select pins from lines manually
+            if i == 2:
+                lattice_id.update({'fp':sline[0]})
+                lattice_id.update({'pa':sline[5]})
+                lattice_id.update({'pb':sline[8]})
+                lattice_id.update({'pc':sline[11]})
+            if i == 3:
+                lattice_id.update({'pd':sline[3]})
+                lattice_id.update({'pe':sline[13]})
+            if i == 5:
+                lattice_id.update({'pf':sline[2]})
+                lattice_id.update({'pg':sline[5]})
+                lattice_id.update({'ph':sline[8]})
+                lattice_id.update({'pi':sline[11]})
+                lattice_id.update({'pj':sline[14]})
+            if i == 8:
+                lattice_id.update({'pk':sline[2]})
+                lattice_id.update({'pl':sline[5]})
+                lattice_id.update({'pm':sline[8]})
+                lattice_id.update({'pn':sline[11]})
+                lattice_id.update({'po':sline[14]})
+            if i == 11:
+                lattice_id.update({'pp':sline[2]})
+                lattice_id.update({'pq':sline[5]})
+                lattice_id.update({'pr':sline[8]})
+                lattice_id.update({'ps':sline[11]})
+                lattice_id.update({'pt':sline[14]})
+            if i == 13:
+                lattice_id.update({'pu':sline[3]})
+                lattice_id.update({'pv':sline[13]})
+            if i == 14:
+                lattice_id.update({'pw':sline[5]})
+                lattice_id.update({'px':sline[8]})
+                lattice_id.update({'py':sline[11]})
 
     # Process lattice id dictionary and replace with actual universes
     for key in lattice_id:

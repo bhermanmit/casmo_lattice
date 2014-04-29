@@ -211,6 +211,10 @@ class CASMOMaterial(object):
             # read in nuclide
             if nuclide_start:
                 nuclide_name = mat_list[i].replace('=', '')
+                if nuclide_name.endswith('C'):
+                    nuclide_name = nuclide_name[:-1]
+                if nuclide_name.endswith('ST'):
+                    nuclide_name = nuclide_name[:-2]
                 self.nuclide_names.append(nuclide_name)
                 nuclide_start = False
             else:

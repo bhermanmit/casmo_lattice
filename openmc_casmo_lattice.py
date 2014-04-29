@@ -211,14 +211,32 @@ class CASMOMaterial(object):
             # read in nuclide
             if nuclide_start:
                 nuclide_name = mat_list[i].replace('=', '')
-                if nuclide_name.endswith('C'):
+                if nuclide_name.endswith('C') and len(nuclide_name) > 1:
                     nuclide_name = nuclide_name[:-1]
                 if nuclide_name.endswith('ST'):
                     nuclide_name = nuclide_name[:-2]
+                if nuclide_name == 'C':
+                    nuclide_name = 'C-Nat'
+                if nuclide_name == 'H':
+                    self.nuclide_names.append('H-1')
+                    nuclide_name = 'H-2'
+                if nuclide_name == 'B':
+                    self.nuclide_names.append('B-10')
+                    nuclide_name = 'B-11'
+                if nuclide_name.find('-') == -1:
+                    idx = re.search("\d", nuclide_name)
+                    idx = idx.start()
+                    nuclide_name = nuclide_name[:idx] + '-' + nuclide_name[idx:]
                 self.nuclide_names.append(nuclide_name)
                 nuclide_start = False
             else:
                 nuclide_frac = float(mat_list[i])/1.0e24
+                if nuclide_name == 'B-11':
+                    self.nuclide_fracs.append(nuclide_frac*0.199)
+                    nuclide_frac *= 0.801
+                if nuclide_name == 'H-2':
+                    self.nuclide_fracs.append(nuclide_frac*0.999885)
+                    nuclide_frac *= 0.000115
                 self.nuclide_fracs.append(nuclide_frac)
                 nuclide_start = True
 

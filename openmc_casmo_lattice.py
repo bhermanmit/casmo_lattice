@@ -107,6 +107,7 @@ class CASMO(object):
                 read_materials = True
                 continue
             if re.search('Dancoff factor map', aline):
+                self.material.update({matname:matline})
                 break
             if not read_materials:
                 continue
@@ -264,6 +265,10 @@ class CASMOPin(object):
                 matname = pin_list[i].replace("'","")
                 self.mats.append(matname)
 
+        # check if fuel to put mats in manually
+        if len(self.mats) == 0:
+            self.mats = ['FUE', 'HEL', 'CAN']
+
     def create_object(self):
 
         i_surf = 0
@@ -309,6 +314,9 @@ def main():
 
     # Process lattice information
     process_lattice(casmo)
+
+    # Create core
+    create_core(casmo)
 
     # Write out all files
     write_files()
@@ -374,13 +382,40 @@ def process_lattice(casmo):
                 lattice_id.update({'pa':py})
                 lattice_id.update({'pw':py})
 
+    # Process lattice id dictionary and replace with actual universes
+    for key in lattice_id:
+        if key == 'w':
+            continue
+
+        # get pin id
+        pinname = 'PIN'+lattice_id[key]
+        if pinname.endswith('W'):
+            pinname = pinname.replace('W','')
+        if pinname.endswith('BP'):
+            pinname = pinname.replace('BP', '_ROD')
+
+        # check for pin
+        if not pinname in casmo.pins:
+            raise Exception('Mismatch between CASMO lattice and CASMO pin dictionary.')
+
+        # update value with universe in lattice id dictionary
+        lattice_id.update({key:univ_dict[pinname].id})
+
     # Create lattice
-    print lattice_id.keys()
     pin_pitch = float(casmo.pin_pitch)
-    lower_left = "-{0} -{0}".format(pin_pitch*19, pin_pitch*19)
+    lower_left = "-{0} -{0}".format(pin_pitch*19/2.0, pin_pitch*19/2.0)
     width = "{0} {0}".format(pin_pitch, pin_pitch)
     universes = pin_lattice.format(**lattice_id)
     add_lattice('lattice', '19 19', lower_left, width, universes) 
+
+def create_core(casmo):
+
+    # Get pin and lattice pitches
+    pin_pitch = float(casmo.pin_pitch)
+    lattice_pitch = float(casmo.lattice_pitch)
+
+    # Set up lattice boundary surfaces
+    add_surface('lattice_left', 'x-plane', '-{0}'.format(pin_pitch*19/2.0))
 
 def write_files():
 
